@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>『じっくり型』タイプ診断</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #fbf3e1;
+    --cream-deep: #f3e8cc;
+    --card: #fffdf6;
+    --line: #e8dcc0;
+    --ink: #3a3226;
+    --ink-soft: #7a7360;
+    --gold: #c9a227;
+    --gold-deep: #a5811a;
+    --leaf: #6b8f71;
+    --leaf-deep: #4f6e55;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(180deg, var(--cream) 0%, var(--cream-deep) 100%);
+    font-family: 'Noto Sans JP', sans-serif;
+    color: var(--ink);
+    display: flex;
+    justify-content: center;
+    padding: 30px 16px 52px;
+  }
+
+  .stage { width: 100%; max-width: 400px; }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .leaf-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--leaf-deep);
+    letter-spacing: 0.04em;
+    margin-bottom: 14px;
+  }
+
+  .leaf-badge svg { width: 14px; height: 14px; flex: 0 0 auto; }
+
+  .intro { text-align: center; padding-top: 6px; }
+
+  .intro h1 {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 23px;
+    line-height: 1.5;
+    margin: 0 0 14px;
+    letter-spacing: 0.03em;
+  }
+
+  .intro .lede-text {
+    font-size: 13.5px;
+    line-height: 2;
+    color: var(--ink-soft);
+    margin: 0 0 26px;
+    text-align: left;
+  }
+
+  .start-btn, .restart-btn, .cta-btn {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 8px;
+    background: var(--gold);
+    color: #fffdf6;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 15.5px;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(165,129,26,0.28);
+    transition: transform 0.15s ease, opacity 0.2s ease;
+    text-decoration: none;
+    text-align: center;
+  }
+  .start-btn:active, .restart-btn:active, .cta-btn:active { transform: scale(0.98); }
+
+  .progress-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+
+  .progress-track {
+    flex: 1;
+    height: 6px;
+    background: var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--gold);
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+
+  .progress-count {
+    font-size: 12px;
+    color: var(--ink-soft);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .question-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 24px 20px;
+    margin-bottom: 18px;
+  }
+
+  .question-eyebrow {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    color: var(--gold-deep);
+    margin-bottom: 10px;
+  }
+
+  .question-text {
+    font-size: 16.5px;
+    line-height: 1.7;
+    margin: 0;
+    font-weight: 500;
+  }
+
+  .choices {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+  }
+
+  .choice {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    text-align: left;
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--ink);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.12s ease;
+  }
+
+  .choice .choice-mark {
+    flex: 0 0 auto;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 1.5px solid var(--gold);
+    color: var(--gold-deep);
+    font-family: 'Shippori Mincho', serif;
+    font-size: 12px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .choice:hover { border-color: var(--gold); }
+  .choice:active { transform: scale(0.98); background: #f6ecd2; }
+
+  .result-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 30px 22px 26px;
+    animation: rise 0.5s ease;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-eyebrow {
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    color: var(--gold-deep);
+    margin-bottom: 12px;
+  }
+
+  .result-title {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 22px;
+    text-align: center;
+    margin: 0 0 4px;
+  }
+
+  .result-kotoba {
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    margin: 0 0 22px;
+  }
+
+  .result-section { margin-bottom: 18px; }
+
+  .result-section .label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--leaf-deep);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .result-section .body-text {
+    font-size: 13.5px;
+    line-height: 1.9;
+    margin: 0;
+  }
+
+  .trait-list { margin: 0; padding-left: 18px; }
+  .trait-list li { font-size: 13.5px; line-height: 1.9; }
+
+  .ng-box {
+    background: var(--cream);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+
+  .hidden-type-box {
+    background: #f2ede0;
+    border-left: 3px solid var(--leaf);
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+  }
+
+  .hidden-type-box .label { color: var(--leaf-deep); }
+
+  .closing-line {
+    font-size: 13px;
+    line-height: 2;
+    color: var(--ink-soft);
+    text-align: center;
+    margin: 0 0 24px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--line);
+  }
+
+  .action-row { display: flex; flex-direction: column; gap: 10px; }
+
+  .share-btn {
+    display: block;
+    width: 100%;
+    padding: 13px;
+    border-radius: 8px;
+    border: 1.5px solid var(--ink);
+    background: var(--card);
+    color: var(--ink);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13.5px;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    transition: background 0.15s ease;
+  }
+  .share-btn:active { background: var(--cream); }
+
+  .again-link {
+    display: block;
+    text-align: center;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <div class="screen active" id="screen-intro">
+    <div class="intro">
+      <div class="leaf-badge">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 20c8-1 14-7 15-15-8 1-14 7-15 15z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M6 18c3-4 7-8 12-11" stroke="currentColor" stroke-width="1.4"/></svg>
+        奥手男性専門の恋愛戦略家・ミナト
+      </div>
+      <h1>『じっくり型』<br>タイプ診断</h1>
+      <p class="lede-text">
+        「動くのが遅い」「決断に時間がかかる」——同じ『じっくり型』でも、その理由は人によって違います。<br><br>
+        全6問、直感で答えるだけで、あなたの『じっくり型』がどのタイプか診断します。所要時間は約1分です。
+      </p>
+      <button class="start-btn" id="startBtn">診断をはじめる</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-quiz">
+    <div class="progress-row">
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-count" id="progressCount">1 / 6</div>
+    </div>
+    <div class="question-card">
+      <div class="question-eyebrow">問い <span id="qNum">1</span></div>
+      <p class="question-text" id="qText"></p>
+    </div>
+    <div class="choices" id="choices"></div>
+  </div>
+
+  <div class="screen" id="screen-result">
+    <div class="result-card">
+      <div class="result-eyebrow">診断結果</div>
+      <h2 class="result-title" id="resTitle"></h2>
+      <p class="result-kotoba" id="resKotoba"></p>
+
+      <div class="result-section">
+        <div class="label">特徴</div>
+        <ul class="trait-list" id="resTraits"></ul>
+      </div>
+
+      <div class="result-section">
+        <div class="label">必要なこと</div>
+        <p class="body-text" id="resNeed"></p>
+      </div>
+
+      <div class="result-section">
+        <div class="label">やってしまいがちなNG行動</div>
+        <div class="ng-box"><p class="body-text" id="resNg"></p></div>
+      </div>
+
+      <div class="hidden-type-box" id="hiddenBox" style="display:none;">
+        <div class="label">その奥に、もう一つの理由が隠れているかもしれません</div>
+        <p class="body-text" id="hiddenText"></p>
+      </div>
+
+      <p class="closing-line">
+        『じっくり型』は、あなたの恋愛の弱点ではありません。<br>
+        自分の性質を理解して、その性質に合った進め方を、少しずつ身につけていく。<br>
+        あなたらしいペースで、大丈夫です。
+      </p>
+
+      <div class="action-row">
+        <a class="cta-btn" id="ctaLink" href="#" target="_blank" rel="noopener">続きの記事を読む</a>
+        <a class="share-btn" id="shareLink" href="#" target="_blank" rel="noopener">診断結果をXでシェアする</a>
+        <button class="again-link" id="restartBtn">もう一度診断する</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ▼ 公開先ページのURLに差し替えてください
+  const ARTICLE_URL = "https://note.com/minato_renai_lab/n/n61b47b263aac?sub_rt=share_b";
+
+  const questions = [
+    { text: "気になる女性にLINEを送るとき、あなたに近いのはどれですか。",
+      choices: { A: "文章を何度も考えてしまう", B: "相手との関係性を考えてから送る", C: "嫌われないか不安になる", D: "そもそも自分なんかが送っていいのかと思う" } },
+    { text: "デートに誘うとき、あなたに近いのはどれですか。",
+      choices: { A: "タイミングを考えすぎてしまう", B: "もっと仲良くなってから、と思う", C: "断られるのが怖くて、なかなか誘えない", D: "何をどう誘えばいいか、わからない" } },
+    { text: "相手から好意的な反応を感じたとき、あなたに近いのはどれですか。",
+      choices: { A: "本当に脈があるのか、何度も考えてしまう", B: "まだ判断できない、と思う", C: "勘違いだったら恥ずかしい、と感じる", D: "どう動けばいいか、わからなくなる" } },
+    { text: "相手からの返信が、少し遅かったとき、あなたに近いのはどれですか。",
+      choices: { A: "なぜ遅いのか、いろいろな可能性を考えてしまう", B: "相手のペースなら仕方ない、と思う", C: "何か悪いことをしたかもしれない、と不安になる", D: "やっぱり自分には興味がないんだ、と決めつけてしまう" } },
+    { text: "相手と二人で会う約束をするとき、あなたに近いのはどれですか。",
+      choices: { A: "場所や時間を、何パターンも考えてから提案する", B: "まずは軽い誘いから、少しずつ回数を重ねたいと思う", C: "相手の予定を優先しすぎて、自分の希望を言えない", D: "誘っても、どうせ断られると思ってしまう" } },
+    { text: "告白を意識したとき、あなたに近いのはどれですか。",
+      choices: { A: "準備やタイミングを、とことん考え抜きたい", B: "もっと関係が深まってからでないと、と感じる", C: "今の関係が壊れることが、何よりも怖い", D: "自分なんかが告白していいのか、と迷ってしまう" } },
+  ];
+
+  const types = {
+    A: { title: "考えてから動く型", kotoba: "合言葉『考えたら、動く』",
+      traits: ["慎重", "失敗を避けたい", "完璧主義になりやすい", "決断まで時間がかかる"],
+      need: "『考えることをやめる』ことではなく、『考える時間に、区切りをつける』ことです。",
+      ng: "考えすぎるあまり、返信や誘いのタイミング自体を逃してしまう。" },
+    B: { title: "丁寧に積み重ねる型", kotoba: "合言葉『積み重ねたら、進む』",
+      traits: ["信頼関係を大切にする", "相手のことを、よく見ている", "急に距離を詰めるのが苦手"],
+      need: "『十分に積み重ねたら、一段進む』という、自分なりの基準を持つことです。",
+      ng: "『まだ早い』を理由に、何ヶ月も同じ距離感のまま止まってしまう。" },
+    C: { title: "嫌われたくない型", kotoba: "合言葉『気持ちを、言葉にする』",
+      traits: ["相手の顔色を、気にしてしまう", "『NO』と言えない", "相手に合わせすぎてしまう", "自分の意見を、なかなか言えない"],
+      need: "好かれることよりも、自分の気持ちを、少しずつ大切にすることです。",
+      ng: "自分の希望を一切言わないまま、関係だけが長引いてしまう。" },
+    D: { title: "自信不足型", kotoba: "合言葉『行動を、記録する』",
+      traits: ["『自分なんか』と、考えてしまう", "誘う前から断られると思ってしまう", "自分の価値を、相手の反応で判断してしまう"],
+      need: "自信をつけてから動くことではなく、小さく動いた経験から、自信を少しずつ作っていくことです。",
+      ng: "相手からのサインを、自分で否定し続けてしまう。" },
+  };
+
+  let current = 0;
+  const counts = { A: 0, B: 0, C: 0, D: 0 };
+
+  const screenIntro = document.getElementById('screen-intro');
+  const screenQuiz = document.getElementById('screen-quiz');
+  const screenResult = document.getElementById('screen-result');
+
+  function showScreen(el) {
+    [screenIntro, screenQuiz, screenResult].forEach(s => s.classList.remove('active'));
+    el.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  document.getElementById('startBtn').addEventListener('click', () => {
+    current = 0;
+    counts.A = 0; counts.B = 0; counts.C = 0; counts.D = 0;
+    renderQuestion();
+    showScreen(screenQuiz);
+  });
+
+  function renderQuestion() {
+    const q = questions[current];
+    document.getElementById('qNum').textContent = current + 1;
+    document.getElementById('progressCount').textContent = `${current + 1} / ${questions.length}`;
+    document.getElementById('progressFill').style.width = `${(current / questions.length) * 100}%`;
+    document.getElementById('qText').textContent = q.text;
+
+    const choicesEl = document.getElementById('choices');
+    choicesEl.innerHTML = '';
+    ['A', 'B', 'C', 'D'].forEach((key) => {
+      const btn = document.createElement('button');
+      btn.className = 'choice';
+      btn.type = 'button';
+      btn.innerHTML = `<span class="choice-mark">${key}</span><span>${q.choices[key]}</span>`;
+      btn.addEventListener('click', () => {
+        counts[key] += 1;
+        current++;
+        if (current < questions.length) {
+          renderQuestion();
+        } else {
+          document.getElementById('progressFill').style.width = '100%';
+          showResult();
+        }
+      });
+      choicesEl.appendChild(btn);
+    });
+  }
+
+  function showResult() {
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    const [primaryKey] = sorted[0];
+    const [secondaryKey, secondaryCount] = sorted[1];
+    const primary = types[primaryKey];
+
+    document.getElementById('resTitle').textContent = `『${primary.title}』`;
+    document.getElementById('resKotoba').textContent = primary.kotoba;
+
+    const traitsEl = document.getElementById('resTraits');
+    traitsEl.innerHTML = '';
+    primary.traits.forEach(t => {
+      const li = document.createElement('li');
+      li.textContent = t;
+      traitsEl.appendChild(li);
+    });
+
+    document.getElementById('resNeed').textContent = primary.need;
+    document.getElementById('resNg').textContent = primary.ng;
+
+    const hiddenBox = document.getElementById('hiddenBox');
+    if (secondaryCount > 0 && secondaryKey !== primaryKey) {
+      const secondary = types[secondaryKey];
+      document.getElementById('hiddenText').textContent =
+        `表面的には『${primary.title}』の行動が強く出ていますが、その奥に『${secondary.title}』の理由が隠れている場合もあります。動けなさが残るときは、そちらの対策も意識してみてください。`;
+      hiddenBox.style.display = 'block';
+    } else {
+      hiddenBox.style.display = 'none';
+    }
+
+    document.getElementById('ctaLink').href = ARTICLE_URL;
+
+    const shareText = `私の『じっくり型』診断結果は『${primary.title}』でした。#恋愛 #奥手男子`;
+    document.getElementById('shareLink').href =
+      `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(ARTICLE_URL)}`;
+
+    showScreen(screenResult);
+  }
+
+  document.getElementById('restartBtn').addEventListener('click', () => {
+    showScreen(screenIntro);
+  });
+</script>
+</body>
+</html>
