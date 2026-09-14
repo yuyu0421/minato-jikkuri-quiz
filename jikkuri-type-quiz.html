@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>『じっくり型』タイプ診断</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #fbf3e1;
+    --cream-deep: #f3e8cc;
+    --card: #fffdf6;
+    --line: #e8dcc0;
+    --ink: #3a3226;
+    --ink-soft: #7a7360;
+    --gold: #dcbf87;
+    --gold-deep: #b3925a;
+    --blush: #f8e2d8;
+    --blush-deep: #e3ac96;
+    --leaf: #6b8f71;
+    --leaf-deep: #4f6e55;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(180deg, var(--cream) 0%, var(--cream-deep) 100%);
+    font-family: 'Noto Sans JP', sans-serif;
+    color: var(--ink);
+    display: flex;
+    justify-content: center;
+    padding: 30px 16px 52px;
+  }
+
+  .stage { width: 100%; max-width: 400px; }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .leaf-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--leaf-deep);
+    letter-spacing: 0.04em;
+    margin-bottom: 14px;
+  }
+
+  .leaf-badge svg { width: 14px; height: 14px; flex: 0 0 auto; }
+
+  .intro { text-align: center; padding-top: 6px; }
+
+  .intro h1 {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-weight: 700;
+    font-size: 23px;
+    line-height: 1.5;
+    margin: 0 0 14px;
+    letter-spacing: 0.02em;
+  }
+
+  .intro .lede-text {
+    font-size: 13.5px;
+    line-height: 2;
+    color: var(--ink-soft);
+    margin: 0 0 26px;
+    text-align: left;
+  }
+
+  .start-btn, .restart-btn, .cta-btn {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--blush-deep) 100%);
+    color: #fffdf6;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-weight: 700;
+    font-size: 15.5px;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(227,172,150,0.35);
+    transition: transform 0.15s ease, opacity 0.2s ease;
+    text-decoration: none;
+    text-align: center;
+  }
+  .start-btn:active, .restart-btn:active, .cta-btn:active { transform: scale(0.98); }
+
+  .progress-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+
+  .progress-track {
+    flex: 1;
+    height: 6px;
+    background: var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--gold);
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+
+  .progress-count {
+    font-size: 12px;
+    color: var(--ink-soft);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .question-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 24px 20px;
+    margin-bottom: 18px;
+  }
+
+  .question-eyebrow {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--blush-deep);
+    margin-bottom: 10px;
+  }
+
+  .question-text {
+    font-size: 16.5px;
+    line-height: 1.7;
+    margin: 0;
+    font-weight: 500;
+  }
+
+  .choices {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+  }
+
+  .choice {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    text-align: left;
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: 16px;
+    padding: 14px 16px;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--ink);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.12s ease;
+  }
+
+  .choice .choice-mark {
+    flex: 0 0 auto;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 1.5px solid var(--blush-deep);
+    color: var(--gold-deep);
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .choice:hover { border-color: var(--blush-deep); }
+  .choice:active { transform: scale(0.98); background: var(--blush); }
+
+  .result-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 30px 22px 26px;
+    animation: rise 0.5s ease;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-eyebrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--leaf-deep);
+    margin-bottom: 12px;
+  }
+
+  .result-eyebrow svg { width: 13px; height: 13px; flex: 0 0 auto; }
+
+  .result-title {
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-weight: 900;
+    font-size: 22px;
+    text-align: center;
+    margin: 0 0 4px;
+  }
+
+  .result-kotoba {
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    margin: 0 0 22px;
+  }
+
+  .result-section { margin-bottom: 18px; }
+
+  .result-section .label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--leaf-deep);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .result-section .body-text {
+    font-size: 13.5px;
+    line-height: 1.9;
+    margin: 0;
+  }
+
+  .trait-list { margin: 0; padding-left: 18px; }
+  .trait-list li { font-size: 13.5px; line-height: 1.9; }
+
+  .ng-box {
+    background: var(--blush);
+    border-radius: 14px;
+    padding: 14px 16px;
+  }
+
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .bar-row .bar-label {
+    width: 20px;
+    flex: 0 0 auto;
+    font-family: 'Zen Maru Gothic', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+
+  .bar-row .bar-track {
+    width: 140px;
+    flex: 0 0 auto;
+    height: 10px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .bar-row .bar-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    border-radius: 4px;
+  }
+
+  .bar-fill--strong { background: #a97c3f; }
+  .bar-fill--mid { background: #cf9f55; }
+  .bar-fill--low { background: #e8cd97; }
+  .bar-fill--none { background: #d6d0c3; }
+
+  .bar-row .bar-text {
+    width: 92px;
+    flex: 0 0 auto;
+    font-size: 11px;
+    color: var(--ink-soft);
+    text-align: right;
+  }
+
+  .closing-line {
+    font-size: 13px;
+    line-height: 2;
+    color: var(--ink-soft);
+    text-align: center;
+    margin: 0 0 24px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--line);
+  }
+
+  .action-row { display: flex; flex-direction: column; gap: 10px; }
+
+  .share-btn {
+    display: block;
+    width: 100%;
+    padding: 13px;
+    border-radius: 8px;
+    border: 1.5px solid var(--ink);
+    background: var(--card);
+    color: var(--ink);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13.5px;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    transition: background 0.15s ease;
+  }
+  .share-btn:active { background: var(--cream); }
+
+  .again-link {
+    display: block;
+    text-align: center;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <div class="screen active" id="screen-intro">
+    <div class="intro">
+      <div class="leaf-badge">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 20c8-1 14-7 15-15-8 1-14 7-15 15z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M6 18c3-4 7-8 12-11" stroke="currentColor" stroke-width="1.4"/></svg>
+        奥手男性専門の恋愛戦略家・ミナト
+      </div>
+      <h1>『じっくり型』<br>タイプ診断</h1>
+      <p class="lede-text">
+        「動くのが遅い」「決断に時間がかかる」——同じ『じっくり型』でも、その理由は人によって違います。<br><br>
+        全6問、直感で答えるだけで、あなたの『じっくり型』がどのタイプか診断します。所要時間は約1分です。
+      </p>
+      <button class="start-btn" id="startBtn">診断をはじめる</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-quiz">
+    <div class="progress-row">
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-count" id="progressCount">1 / 6</div>
+    </div>
+    <div class="question-card">
+      <div class="question-eyebrow">問い <span id="qNum">1</span></div>
+      <p class="question-text" id="qText"></p>
+    </div>
+    <div class="choices" id="choices"></div>
+  </div>
+
+  <div class="screen" id="screen-result">
+    <div class="result-card">
+      <div class="result-eyebrow">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 20c8-1 14-7 15-15-8 1-14 7-15 15z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M6 18c3-4 7-8 12-11" stroke="currentColor" stroke-width="1.4"/></svg>
+        診断結果
+      </div>
+      <h2 class="result-title" id="resTitle"></h2>
+      <p class="result-kotoba" id="resKotoba"></p>
+
+      <div class="result-section">
+        <div class="label">4タイプの傾向</div>
+        <div id="barChart"></div>
+      </div>
+
+      <div class="result-section">
+        <div class="label">あなたの強み</div>
+        <ul class="trait-list" id="resStrengths"></ul>
+      </div>
+
+      <div class="result-section">
+        <div class="label">慎重になりやすい場面</div>
+        <p class="body-text" id="resScene"></p>
+      </div>
+
+      <div class="result-section">
+        <div class="label">気をつけたいこと</div>
+        <div class="ng-box"><p class="body-text" id="resNg"></p></div>
+      </div>
+
+      <div class="result-section">
+        <div class="label">あなたの次の一歩</div>
+        <ul class="trait-list" id="resNextSteps"></ul>
+      </div>
+
+      <p class="closing-line" id="closingLine"></p>
+
+      <div class="action-row">
+        <a class="cta-btn" id="ctaLink" href="#" onclick="return goBackToArticle(event)">記事に戻る</a>
+        <a class="share-btn" id="shareLink" href="#" target="_blank" rel="noopener">診断結果をXでシェアする</a>
+        <button class="again-link" id="restartBtn">もう一度診断する</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ▼ 記事⑩が公開されたら、そのURLに差し替えてください(現在は仮で記事①のURLが入っています)
+  const ARTICLE_URL = "https://note.com/minato_renai_lab/n/n61b47b263aac?sub_rt=share_b";
+
+  const questions = [
+    { scene: "LINEを送るとき", text: "気になる女性にLINEを送るとき、あなたに近いのはどれですか。",
+      choices: { A: "文章を何度も考えてしまう", B: "相手との関係性を考えてから送る", C: "嫌われないか不安になる", D: "そもそも自分なんかが送っていいのかと思う" } },
+    { scene: "デートに誘うとき", text: "デートに誘うとき、あなたに近いのはどれですか。",
+      choices: { A: "タイミングを考えすぎてしまう", B: "もっと仲良くなってから、と思う", C: "断られるのが怖くて、なかなか誘えない", D: "何をどう誘えばいいか、わからない" } },
+    { scene: "相手の好意的な反応を感じたとき", text: "相手から好意的な反応を感じたとき、あなたに近いのはどれですか。",
+      choices: { A: "本当に脈があるのか、何度も考えてしまう", B: "まだ判断できない、と思う", C: "勘違いだったら恥ずかしい、と感じる", D: "どう動けばいいか、わからなくなる" } },
+    { scene: "相手からの返信が遅かったとき", text: "相手からの返信が、少し遅かったとき、あなたに近いのはどれですか。",
+      choices: { A: "なぜ遅いのか、いろいろな可能性を考えてしまう", B: "相手のペースなら仕方ない、と思う", C: "何か悪いことをしたかもしれない、と不安になる", D: "やっぱり自分には興味がないんだ、と決めつけてしまう" } },
+    { scene: "二人で会う約束をするとき", text: "相手と二人で会う約束をするとき、あなたに近いのはどれですか。",
+      choices: { A: "場所や時間を、何パターンも考えてから提案する", B: "まずは軽い誘いから、少しずつ回数を重ねたいと思う", C: "相手の予定を優先しすぎて、自分の希望を言えない", D: "誘っても、どうせ断られると思ってしまう" } },
+    { scene: "告白を意識したとき", text: "告白を意識したとき、あなたに近いのはどれですか。",
+      choices: { A: "準備やタイミングを、とことん考え抜きたい", B: "もっと関係が深まってからでないと、と感じる", C: "今の関係が壊れることが、何よりも怖い", D: "自分なんかが告白していいのか、と迷ってしまう" } },
+  ];
+
+  const types = {
+    A: { title: "考えてから動く型",
+      strengths: ["慎重に判断できる", "相手の反応を考えられる", "一度決めれば行動に移せる"],
+      ng: "考えすぎるあまり、返信や誘いのタイミングを、逃してしまったりしませんか？",
+      nextSteps: ["30分考えたら、いったん送ってみる", "「80点で送る」を合言葉にしてみる"],
+      oneLine: "完璧な答えを探すより、考えたあとに一歩を出す。" },
+    B: { title: "丁寧に積み重ねる型",
+      strengths: ["信頼関係を大切にできる", "相手をよく見られる", "小さな積み重ねができる"],
+      ng: "『まだ早い』を理由に、何ヶ月も同じ距離感のまま、止まってしまったりしませんか？",
+      nextSteps: ["十分に積み重ねたと感じたら、次の約束を自分から提案してみる", "2〜3回楽しく会えたら、次の段階を意識してみる"],
+      oneLine: "丁寧に積み重ねたなら、次は少しだけ前へ。" },
+    C: { title: "嫌われたくない型",
+      strengths: ["相手の気持ちを考えられる", "相手に配慮できる", "関係を壊さないよう慎重に行動できる"],
+      ng: "自分の希望を、つい後回しにしてしまったりしませんか？",
+      nextSteps: ["一度は、自分の希望を言葉にして伝えてみる", "「〇〇さんはどうしたい?」と、相手に聞かれたら自分の希望も添えてみる"],
+      oneLine: "相手を大切にすることと、自分を消すことは違う。" },
+    D: { title: "自信不足型",
+      strengths: ["自分を客観視しようとする", "慎重に相手を見る", "相手の反応を大切にできる"],
+      ng: "相手からのサインを、つい自分で打ち消してしまったりしませんか？",
+      nextSteps: ["結果ではなく、自分から行動できたこと自体を記録してみる", "小さく動けた日を、簡単にでもメモしてみる"],
+      oneLine: "自信がついてからではなく、小さな行動から自信を作る。" },
+  };
+
+  const comboOneLiners = {
+    AB: "考えることも、積み重ねることも、どちらも大切な力です。",
+    AC: "考えることも、相手を思うことも、どちらもあなたらしさです。",
+    AD: "考える力はあります。あとは、小さな一歩を信じてみてください。",
+    BC: "積み重ねる誠実さと、相手を思う気持ち。どちらも大切に。",
+    BD: "積み重ねてきたものを、もう少しだけ信じてみてください。",
+    CD: "相手を思う気持ちも、自分の価値も、どちらも大切にしていい。",
+  };
+
+  let current = 0;
+  const counts = { A: 0, B: 0, C: 0, D: 0 };
+  let currentAnswers = [];
+
+  const screenIntro = document.getElementById('screen-intro');
+  const screenQuiz = document.getElementById('screen-quiz');
+  const screenResult = document.getElementById('screen-result');
+
+  function showScreen(el) {
+    [screenIntro, screenQuiz, screenResult].forEach(s => s.classList.remove('active'));
+    el.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  document.getElementById('startBtn').addEventListener('click', () => {
+    current = 0;
+    counts.A = 0; counts.B = 0; counts.C = 0; counts.D = 0;
+    currentAnswers = [];
+    renderQuestion();
+    showScreen(screenQuiz);
+  });
+
+  function renderQuestion() {
+    const q = questions[current];
+    document.getElementById('qNum').textContent = current + 1;
+    document.getElementById('progressCount').textContent = `${current + 1} / ${questions.length}`;
+    document.getElementById('progressFill').style.width = `${(current / questions.length) * 100}%`;
+    document.getElementById('qText').textContent = q.text;
+
+    const choicesEl = document.getElementById('choices');
+    choicesEl.innerHTML = '';
+    ['A', 'B', 'C', 'D'].forEach((key) => {
+      const btn = document.createElement('button');
+      btn.className = 'choice';
+      btn.type = 'button';
+      btn.innerHTML = `<span class="choice-mark">${key}</span><span>${q.choices[key]}</span>`;
+      btn.addEventListener('click', () => {
+        counts[key] += 1;
+        currentAnswers.push(key);
+        current++;
+        if (current < questions.length) {
+          renderQuestion();
+        } else {
+          document.getElementById('progressFill').style.width = '100%';
+          showResult();
+        }
+      });
+      choicesEl.appendChild(btn);
+    });
+  }
+
+  function goBackToArticle(e) {
+    e.preventDefault();
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.href = ARTICLE_URL;
+    }
+    return false;
+  }
+
+  const STEP_ORDER = ["LINEを送るとき", "デートに誘うとき", "二人で会う約束をするとき", "相手の好意的な反応を感じたとき", "相手からの返信が遅かったとき", "告白を意識したとき"];
+
+  function strengthLabel(count) {
+    if (count >= 4) return { label: "強く出ています", ratio: 1, cls: "bar-fill--strong" };
+    if (count >= 2) return { label: "傾向があります", ratio: 0.6, cls: "bar-fill--mid" };
+    if (count === 1) return { label: "少し含まれています", ratio: 0.3, cls: "bar-fill--low" };
+    return { label: "今回はあまり見られません", ratio: 0.06, cls: "bar-fill--none" };
+  }
+
+  const BAR_TRACK_PX = 140;
+
+  function renderBars(counts) {
+    const el = document.getElementById('barChart');
+    el.innerHTML = '';
+    ['A', 'B', 'C', 'D'].forEach(key => {
+      const { label, ratio, cls } = strengthLabel(counts[key]);
+      const widthPx = Math.round(ratio * BAR_TRACK_PX);
+      const row = document.createElement('div');
+      row.className = 'bar-row';
+      row.innerHTML = `
+        <span class="bar-label">${key}</span>
+        <span class="bar-track"><span class="bar-fill ${cls}" style="width:${widthPx}px"></span></span>
+        <span class="bar-text">${label}</span>
+      `;
+      el.appendChild(row);
+    });
+  }
+
+  function findCautiousScene(mainKeys, answers) {
+    const deviations = answers.filter(a => !mainKeys.includes(a.key));
+    if (deviations.length === 0) return null;
+
+    const freq = {};
+    deviations.forEach(d => { freq[d.key] = (freq[d.key] || 0) + 1; });
+    const maxFreq = Math.max(...Object.values(freq));
+    let candidateKeys = Object.keys(freq).filter(k => freq[k] === maxFreq);
+
+    // 複数タイプが同頻度で並ぶ場合のみ、記事のステップ順を「どちらを先に表示するか」の並び順として使う(重要度の意味は持たせない)
+    candidateKeys.sort((a, b) => {
+      const aScene = deviations.find(d => d.key === a).scene;
+      const bScene = deviations.find(d => d.key === b).scene;
+      return STEP_ORDER.indexOf(aScene) - STEP_ORDER.indexOf(bScene);
+    });
+    const chosenKey = candidateKeys[0];
+    const scenes = deviations.filter(d => d.key === chosenKey).map(d => d.scene);
+    const uniqueScenes = [...new Set(scenes)];
+    const sceneText = uniqueScenes.length > 1
+      ? uniqueScenes.slice(0, -1).join('、') + 'と' + uniqueScenes[uniqueScenes.length - 1]
+      : uniqueScenes[0];
+
+    return { key: chosenKey, sceneText };
+  }
+
+  function showResult() {
+    const answers = questions.map((q, i) => ({ scene: q.scene, key: currentAnswers[i] }));
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    const topCount = sorted[0][1];
+    const topKeys = sorted.filter(([, c]) => c === topCount).map(([k]) => k);
+    const isCombo = topKeys.length >= 2;
+
+    renderBars(counts);
+
+    let mainKeys, oneLine, strengths, ngList, nextList;
+
+    if (isCombo) {
+      const comboKeys = topKeys.sort();
+      const comboTypes = comboKeys.map(k => types[k]);
+      document.getElementById('resTitle').textContent = comboTypes.map(t => `『${t.title}』`).join('×');
+      document.getElementById('resKotoba').textContent = `${comboKeys.join('型と')}型が、ほぼ同じくらい出ています`;
+      mainKeys = comboKeys;
+      if (comboKeys.length === 2) {
+        oneLine = comboOneLiners[comboKeys.join('')] || comboOneLiners[comboKeys.slice().reverse().join('')] || comboTypes.map(t => t.oneLine).join(' ');
+      } else {
+        oneLine = comboTypes.map(t => t.oneLine).join(' ');
+      }
+      strengths = [...new Set(comboTypes.flatMap(t => t.strengths))].slice(0, 3);
+      ngList = comboTypes.map(t => `${t.title}:${t.ng}`).join('<br>');
+      nextList = comboTypes.map(t => t.nextSteps[0]);
+    } else {
+      const primaryKey = topKeys[0];
+      const primary = types[primaryKey];
+      document.getElementById('resTitle').textContent = `『${primary.title}』`;
+      document.getElementById('resKotoba').textContent = "";
+      mainKeys = [primaryKey];
+      oneLine = primary.oneLine;
+      strengths = primary.strengths;
+      ngList = primary.ng;
+      nextList = primary.nextSteps;
+    }
+
+    const strengthsEl = document.getElementById('resStrengths');
+    strengthsEl.innerHTML = '';
+    strengths.forEach(s => {
+      const li = document.createElement('li');
+      li.textContent = s;
+      strengthsEl.appendChild(li);
+    });
+
+    document.getElementById('resNg').innerHTML = ngList;
+
+    const nextEl = document.getElementById('resNextSteps');
+    nextEl.innerHTML = '';
+    nextList.forEach(s => {
+      const li = document.createElement('li');
+      li.textContent = s;
+      nextEl.appendChild(li);
+    });
+
+    const scene = findCautiousScene(mainKeys, answers);
+    const sceneEl = document.getElementById('resScene');
+    if (!scene) {
+      sceneEl.textContent = "今回の回答では、6つの場面すべてで一貫した傾向が見られました。特定の場面というより、恋愛のいろいろな場面で、似た反応をしやすいようです。";
+    } else {
+      const sceneTypeTitle = types[scene.key].title;
+      sceneEl.textContent = `今回の回答では、「${scene.sceneText}」の場面で、『${sceneTypeTitle}』の気持ちも少し顔を出しているようです。慎重になりやすい傾向が見られました。`;
+    }
+
+    document.getElementById('closingLine').innerHTML =
+      `『じっくり型』は、あなたの弱点なんかじゃありません。自分の性質を知って、その性質に合った進め方を、少しずつ見つけていく。<br><br>${oneLine}`;
+
+    document.getElementById('ctaLink').href = ARTICLE_URL;
+
+    const shareTitle = isCombo ? mainKeys.map(k => `『${types[k].title}』`).join('×') : `『${types[mainKeys[0]].title}』`;
+    const shareText = `私の『じっくり型』診断結果は${shareTitle}でした。#恋愛 #奥手男子`;
+    document.getElementById('shareLink').href =
+      `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(ARTICLE_URL)}`;
+
+    showScreen(screenResult);
+  }
+
+  document.getElementById('restartBtn').addEventListener('click', () => {
+    showScreen(screenIntro);
+  });
+</script>
+</body>
+</html>
